@@ -117,3 +117,27 @@ Open your browser and navigate to: **[http://127.0.0.1:8000/static/index.html](h
 - **Focused Panel (Center):** Shows digital parameter meters and a large rolling canvas ECG. Inline trend charts render real-time history lines for HR, SpO2, NIBP, and Temperature.
 - **Alert Notifications:** Flashing red banners indicate critical states, playing synchronized alert beeps. Click **Acknowledge Alarm** on the banner to clear the active alarm in the database.
 - **System Monitoring (Right Sidebar):** View database records count, active devices status, and live hexadecimal UDP packet streams.
+
+---
+
+## Deployment
+
+### Render backend
+Use the included [render.yaml](render.yaml) Blueprint to deploy the FastAPI backend on Render. The service expects MySQL connection values in environment variables:
+- `DB_HOST`
+- `DB_USER`
+- `DB_PASSWORD`
+- `DB_NAME`
+- `DB_PORT`
+
+After deployment, the Render root URL redirects to the dashboard at `/static/index.html`, while the API remains available under `/api/*` and `/ws/live`.
+
+### Netlify frontend
+Use the included [netlify.toml](netlify.toml) to publish the `static/` folder as a standalone site. The frontend defaults to `https://ppm-backend.onrender.com` for API and websocket traffic.
+
+If your Render service URL is different, open the Netlify site once with `?backend=<your-render-host>` in the query string. The browser caches that host in local storage, so subsequent visits keep using the correct backend.
+
+### Recommended split
+- Render hosts the Python API and websocket service.
+- Netlify hosts the static clinical dashboard.
+- When the frontend is opened on the Render host itself, it uses same-origin requests automatically.

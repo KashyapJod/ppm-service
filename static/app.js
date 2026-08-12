@@ -87,14 +87,23 @@ if (paramBackend) {
 }
 
 const cloudBackendHost = localStorage.getItem("ppm_backend_host") || "ppm-backend.onrender.com";
+const sameOriginBackend = window.location.hostname === cloudBackendHost;
 
 const API_BASE = isLocal 
     ? "" 
-    : `https://${cloudBackendHost}`;
+    : sameOriginBackend
+        ? ""
+        : `https://${cloudBackendHost}`;
 
 const WS_BASE = isLocal 
     ? `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}` 
+    : sameOriginBackend
+        ? `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}` 
     : `wss://${cloudBackendHost}`;
+if (!isLocal && !sameOriginBackend) {
+    // Netlify and other static hosts need an explicit backend origin.
+    console.info(`[Deployment] Using backend host ${cloudBackendHost}`);
+}
 
 // REST Helpers
 async function apiGet(endpoint) {

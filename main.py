@@ -8,6 +8,7 @@ from mysql.connector import Error, pooling
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from datetime import datetime
 from protocol_decoder import unpack_packet, MSG_DATA, MSG_SIM_CONTROL, build_packet
@@ -509,7 +510,7 @@ def startup_event():
 # Mount frontend folder
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Root redirect to static frontend
+# Root redirect to the static frontend so Render can serve the UI from the same app.
 @app.get("/")
 def read_root():
-    return {"message": "YK-8000C Dashboard API. Go to /static/index.html to view dashboard."}
+    return RedirectResponse(url="/static/index.html")
