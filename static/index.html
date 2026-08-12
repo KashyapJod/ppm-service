@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YK-8000C Central Clinical Workstation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Alarm Banner Container -->
+    <div id="alarm-banner-container" class="alarm-banner-container hidden">
+        <div class="alarm-banner">
+            <div class="alarm-icon">⚠️</div>
+            <div class="alarm-content">
+                <span class="alarm-title">CRITICAL ALARM LIMIT EXCEEDED</span>
+                <span id="alarm-message" class="alarm-message">Patient Bed ICU-02: SpO2 critical low (91.0%)</span>
+            </div>
+            <button id="ack-alarm-btn" class="ack-btn">ACKNOWLEDGE ALARM</button>
+        </div>
+    </div>
+
+    <!-- Main Workstation App Layout -->
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo-area">
+                <span class="pulse-dot-green"></span>
+                <h1>YK-8000C CLINICAL WORKSTATION</h1>
+                <span class="badge-status">SURVEILLANCE ACTIVE</span>
+            </div>
+            <div class="system-time" id="clock">--:--:--</div>
+        </header>
+
+        <!-- 3-Column Workstation Workspace -->
+        <main class="workstation-workspace">
+            
+            <!-- Column 1: Bed Selector Sidebar -->
+            <aside class="bed-selector-panel glass-panel">
+                <h2>PATIENT BEDS</h2>
+                <div class="bed-list" id="bed-list-container">
+                    <div class="loading-state">Loading admissions...</div>
+                </div>
+            </aside>
+
+            <!-- Column 2: Focused Bed Panel (Vitals + Toolbar + ECG + Trends) -->
+            <section class="focused-bed-panel">
+                
+                <!-- Clinical Toolbar -->
+                <div class="toolbar glass-panel">
+                    <div class="toolbar-group">
+                        <button id="mute-audio-btn" class="tool-btn">🔊 AUDIO ALARM</button>
+                        <button id="pause-audio-btn" class="tool-btn">⏸️ SILENCE (60s)</button>
+                    </div>
+                    <div class="toolbar-group">
+                        <label for="condition-select">INJECT CONDITION:</label>
+                        <select id="condition-select" class="tool-select">
+                            <option value="NORMAL">Normal Rhythm</option>
+                            <option value="TACHYCARDIA">Tachycardia (High HR)</option>
+                            <option value="BRADYCARDIA">Bradycardia (Low HR)</option>
+                            <option value="HYPOXIA">Hypoxia (Low SpO2)</option>
+                            <option value="FEVER">High Fever (Fever)</option>
+                        </select>
+                        <button id="inject-btn" class="tool-btn action-btn">INJECT</button>
+                    </div>
+                    <div class="toolbar-group">
+                        <label for="ecg-lead">LEAD:</label>
+                        <select id="ecg-lead" class="tool-select">
+                            <option value="I">Lead I</option>
+                            <option value="II" selected>Lead II</option>
+                            <option value="III">Lead III</option>
+                        </select>
+                        <label for="ecg-gain">ECG AMPLITUDE:</label>
+                        <select id="ecg-gain" class="tool-select">
+                            <option value="0.5">x0.5</option>
+                            <option value="1.0" selected>x1.0</option>
+                            <option value="2.0">x2.0</option>
+                        </select>
+                        <label for="ecg-speed">SPEED:</label>
+                        <select id="ecg-speed" class="tool-select">
+                            <option value="12.5">12.5 mm/s</option>
+                            <option value="25" selected>25 mm/s</option>
+                            <option value="50">50 mm/s</option>
+                        </select>
+                        <button id="toggle-grid-btn" class="tool-btn active">GRID ON</button>
+                    </div>
+                    <div class="toolbar-group">
+                        <button id="export-csv-btn" class="tool-btn export-btn">📥 EXPORT CSV</button>
+                    </div>
+                </div>
+
+                <!-- Main Patient Focused Details -->
+                <div class="focused-bed-content glass-panel" id="focused-bed-container">
+                    <div class="patient-focused-header">
+                        <div class="focused-meta">
+                            <h2 id="focus-bed-label">SELECT A PATIENT</h2>
+                            <span id="focus-patient-name" class="name-text">No patient selected</span>
+                            <span id="focus-patient-details" class="details-text">---</span>
+                        </div>
+                        <div id="focus-device-badge" class="device-badge offline">
+                            <span class="status-dot"></span>
+                            <span class="status-text">OFFLINE</span>
+                        </div>
+                    </div>
+
+                    <!-- Live Vital Readings Grid -->
+                    <div class="focused-vitals-grid">
+                        <div class="focus-vital-metric">
+                            <span class="label">HEART RATE</span>
+                            <span class="value text-cyan" id="focus-val-hr">--</span>
+                            <span class="unit">BPM</span>
+                        </div>
+                        <div class="focus-vital-metric">
+                            <span class="label">SpO2</span>
+                            <span class="value text-orange" id="focus-val-spo2">--</span>
+                            <span class="unit">%</span>
+                        </div>
+                        <div class="focus-vital-metric">
+                            <span class="label">BLOOD PRESSURE</span>
+                            <span class="value text-yellow" id="focus-val-nibp">--/--</span>
+                            <span class="unit">mmHg</span>
+                        </div>
+                        <div class="focus-vital-metric">
+                            <span class="label">TEMPERATURE</span>
+                            <span class="value text-green" id="focus-val-temp">--.-</span>
+                            <span class="unit">°C</span>
+                        </div>
+                        <div class="focus-vital-metric">
+                            <span class="label">RESPIRATION</span>
+                            <span class="value text-resp" id="focus-val-resp">--</span>
+                            <span class="unit">/min</span>
+                        </div>
+                    </div>
+
+                    <!-- Large focused ECG canvas -->
+                    <div class="focused-ecg-frame">
+                        <span class="lead-label">ECG Lead II (Live Sweep)</span>
+                        <canvas id="focus-ecg-canvas"></canvas>
+                    </div>
+
+                    <!-- Historical Inline Vitals Graphs -->
+                    <div class="inline-trends-section">
+                        <h3>HISTORICAL TELEMETRY TRENDS (LATEST 50 SAMPLES)</h3>
+                        <div class="trends-grid">
+                            <div class="trend-chart-box">
+                                <h4>Heart Rate (BPM)</h4>
+                                <canvas id="focus-chart-hr" width="380" height="120"></canvas>
+                            </div>
+                            <div class="trend-chart-box">
+                                <h4>SpO2 (%)</h4>
+                                <canvas id="focus-chart-spo2" width="380" height="120"></canvas>
+                            </div>
+                            <div class="trend-chart-box">
+                                <h4>Blood Pressure (mmHg)</h4>
+                                <canvas id="focus-chart-nibp" width="380" height="120"></canvas>
+                            </div>
+                            <div class="trend-chart-box">
+                                <h4>Temperature (°C)</h4>
+                                <canvas id="focus-chart-temp" width="380" height="120"></canvas>
+                            </div>
+                    </div>
+                    
+                    <!-- Clinical Configuration & Bedside Notes Section -->
+                    <div class="clinical-management-section">
+                        <div class="management-grid">
+                            <!-- Alarm Limit Configurator Card -->
+                            <div class="mgmt-card">
+                                <h3>⚠️ ALARM LIMIT CONFIGURATION</h3>
+                                <div class="mgmt-form">
+                                    <div class="form-row">
+                                        <label for="limit-hr-low">Low HR Limit (BPM)</label>
+                                        <input type="number" id="limit-hr-low" class="mgmt-input" value="60" min="30" max="150">
+                                    </div>
+                                    <div class="form-row">
+                                        <label for="limit-hr-high">High HR Limit (BPM)</label>
+                                        <input type="number" id="limit-hr-high" class="mgmt-input" value="100" min="60" max="220">
+                                    </div>
+                                    <div class="form-row">
+                                        <label for="limit-spo2-low">Low SpO2 Limit (%)</label>
+                                        <input type="number" id="limit-spo2-low" class="mgmt-input" value="90" min="70" max="98" step="1">
+                                    </div>
+                                    <div class="form-row">
+                                        <label for="limit-temp-high">High Temp Limit (°C)</label>
+                                        <input type="number" id="limit-temp-high" class="mgmt-input" value="38" min="36" max="42" step="0.1">
+                                    </div>
+                                    <button id="save-limits-btn" class="tool-btn action-btn">APPLY ALARM LIMITS</button>
+                                </div>
+                            </div>
+                            
+                            <!-- Bedside Care Notes Card -->
+                            <div class="mgmt-card">
+                                <h3>✍️ BEDSIDE CLINICAL NOTES</h3>
+                                <div class="notes-container">
+                                    <div class="notes-list" id="notes-list-container">
+                                        <div class="notes-placeholder">No care notes logged.</div>
+                                    </div>
+                                    <div class="note-form">
+                                        <div class="form-row">
+                                            <input type="text" id="note-author" class="mgmt-input" placeholder="Clinician Name (e.g. Nurse Jane)">
+                                        </div>
+                                        <div class="form-row">
+                                            <textarea id="note-text" class="mgmt-textarea" placeholder="Add clinical update or observation..."></textarea>
+                                        </div>
+                                        <button id="save-note-btn" class="tool-btn action-btn">SAVE BEDSIDE NOTE</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Patient Alarm Audit History Logs Table -->
+                    <div class="alarm-audit-section">
+                        <h3>📋 PATIENT ALARM AUDIT HISTORY (LATEST 20 EVENTS)</h3>
+                        <div class="table-container">
+                            <table class="audit-table">
+                                <thead>
+                                    <tr>
+                                        <th>Timestamp</th>
+                                        <th>Alarm Type</th>
+                                        <th>Severity</th>
+                                        <th>Diagnostic Message</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="alarm-audit-tbody">
+                                    <tr>
+                                        <td colspan="5" class="table-placeholder">No alarm history records found.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- Column 3: Diagnostics & Hex Logs Sidebar -->
+            <aside class="diagnostics-panel">
+                <div class="sidebar-card diagnostics-card glass-panel">
+                    <h2>SYSTEM DIAGNOSTICS</h2>
+                    <div class="diag-item">
+                        <span>Database Size (Vitals):</span>
+                        <span id="diag-db-vitals" class="diag-val">0 records</span>
+                    </div>
+                    <div class="diag-item">
+                        <span>Comm Logs Table:</span>
+                        <span id="diag-db-packets" class="diag-val">0 pkts</span>
+                    </div>
+                    <div class="diag-item">
+                        <span>Active Alarms:</span>
+                        <span id="diag-active-alarms" class="diag-val">0 active</span>
+                    </div>
+                    <div class="diag-item">
+                        <span>Last Captured Packet:</span>
+                        <span id="diag-last-packet" class="diag-val">Never</span>
+                    </div>
+                    <div class="device-status-list" id="device-status-list">
+                        <!-- Devices statuses will be listed here -->
+                    </div>
+                </div>
+
+                <div class="sidebar-card logs-card glass-panel">
+                    <h2>COMMUNICATION LOG (UDP HEX)</h2>
+                    <div class="logs-feed" id="logs-feed">
+                        <div class="log-placeholder">Listening for incoming hexadecimal packet streams...</div>
+                    </div>
+                </div>
+            </aside>
+
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
